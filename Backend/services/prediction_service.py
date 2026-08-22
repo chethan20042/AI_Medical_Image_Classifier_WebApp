@@ -15,7 +15,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(
     BASE_DIR,
     "models",
-    "densenet121_best.keras"
+    "densenet121_best.h5"
 )
 
 
