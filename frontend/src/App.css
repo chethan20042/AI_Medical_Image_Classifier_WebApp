@@ -4321,3 +4321,103 @@
     width: 100%;
   }
 }
+
+/* ---------------------------------------------------------
+   ACCOUNT DANGER ZONE
+--------------------------------------------------------- */
+
+.danger-zone {
+  margin-top: 22px;
+
+  padding: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  background: #fef2f2;
+
+  border: 1px solid #fecaca;
+  border-radius: 11px;
+}
+
+
+.danger-zone strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #991b1b;
+}
+
+
+.danger-zone p {
+  max-width: 650px;
+
+  margin: 0;
+
+  color: #b91c1c;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+
+.delete-account-button {
+  padding: 10px 15px;
+
+  flex-shrink: 0;
+
+  background: #ffffff;
+  color: #dc2626;
+
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.delete-account-button:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+
+.delete-account-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+
+.profile-delete-error {
+  margin-top: 12px;
+
+  padding: 12px;
+
+  background: #fef2f2;
+  color: #b91c1c;
+
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  font-size: 12px;
+}
+
+
+@media (max-width: 650px) {
+  .danger-zone {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+
+  .delete-account-button {
+    width: 100%;
+  }
+}

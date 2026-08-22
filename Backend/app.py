@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_cors import CORS
 from config.database import connect_database
@@ -19,7 +21,21 @@ from routes.auth_routes import auth_bp
 from routes.prediction_routes import (
     prediction_bp
 )
+# ---------------------------------------------------------
+# LOAD ENVIRONMENT VARIABLES
+# ---------------------------------------------------------
 
+load_dotenv()
+
+
+# ---------------------------------------------------------
+# ENVIRONMENT CONFIGURATION
+# ---------------------------------------------------------
+
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)
 
 # ---------------------------------------------------------
 # CREATE FLASK APP
@@ -45,7 +61,7 @@ app.config["MAX_CONTENT_LENGTH"] = (
 CORS(
     app,
     origins=[
-        "http://localhost:5173",
+        FRONTEND_URL,
         "http://127.0.0.1:5173"
     ]
 )
@@ -194,6 +210,20 @@ def database_status():
 
 if __name__ == "__main__":
 
-    app.run(
-        debug=True
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
     )
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )
+
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)

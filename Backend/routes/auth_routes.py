@@ -1,6 +1,7 @@
 import re
 import bcrypt
 
+from bson import ObjectId
 from flask import Blueprint, request, jsonify, g
 
 from config.database import get_database
@@ -442,4 +443,92 @@ def current_user():
             "status": "error",
             "message":
                 "Unable to retrieve user information."
+        }), 500
+
+# ---------------------------------------------------------
+# DELETE ACCOUNT
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/delete-account",
+    methods=["DELETE"]
+)
+@token_required
+def delete_account():
+
+    try:
+
+        database = get_database()
+
+        users_collection = database[
+            "users"
+        ]
+
+        predictions_collection = database[
+            "predictions"
+        ]
+
+        chats_collection = database[
+            "chats"
+        ]
+
+
+        user_id = g.current_user[
+            "user_id"
+        ]
+
+
+        # ---------------------------------------------
+        # DELETE USER'S CHATS
+        # ---------------------------------------------
+
+        chats_collection.delete_many({
+            "user_id":
+                user_id
+        })
+
+
+        # ---------------------------------------------
+        # DELETE USER'S PREDICTIONS
+        # ---------------------------------------------
+
+        predictions_collection.delete_many({
+            "user_id":
+                user_id
+        })
+
+
+        # ---------------------------------------------
+        # DELETE USER ACCOUNT
+        # ---------------------------------------------
+
+        users_collection.delete_one({
+            "_id":
+                ObjectId(
+                    user_id
+                )
+        })
+
+
+        return jsonify({
+            "status":
+                "success",
+
+            "message":
+                "Account and related data deleted successfully."
+        }), 200
+
+
+    except Exception as error:
+
+        print(
+            f"Delete account error: {error}"
+        )
+
+        return jsonify({
+            "status":
+                "error",
+
+            "message":
+                "Unable to delete account."
         }), 500

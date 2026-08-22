@@ -1,129 +1,280 @@
-import os
-import jwt
-
-from datetime import datetime, timedelta, timezone
 from functools import wraps
+from datetime import datetime, timedelta, timezone
+import os
+
+import jwt
+from bson import ObjectId
 from flask import request, jsonify, g
-from dotenv import load_dotenv
+
+from config.database import get_database
 
 
 # ---------------------------------------------------------
-# LOAD ENVIRONMENT VARIABLES
+# JWT SECRET
 # ---------------------------------------------------------
-
-load_dotenv()
 
 JWT_SECRET_KEY = os.getenv(
     "JWT_SECRET_KEY"
 )
 
-JWT_ALGORITHM = "HS256"
+
+if not JWT_SECRET_KEY:
+    raise ValueError(
+        "JWT_SECRET_KEY is missing from .env"
+    )
 
 
 # ---------------------------------------------------------
 # GENERATE JWT
 # ---------------------------------------------------------
 
-def generate_token(user_id, email):
+def generate_token(
+    user_id,
+    email
+):
     """
-    Generate a JWT for an authenticated user.
+    Generate a JWT token for an authenticated user.
     """
 
-    if not JWT_SECRET_KEY:
-        raise ValueError(
-            "JWT_SECRET_KEY is missing from .env"
-        )
+    now = datetime.now(
+        timezone.utc
+    )
 
-    now = datetime.now(timezone.utc)
 
     payload = {
-        "user_id": str(user_id),
-        "email": email,
-        "iat": now,
-        "exp": now + timedelta(hours=24)
+
+        "user_id":
+            str(user_id),
+
+        "email":
+            email,
+
+        "iat":
+            now,
+
+        "exp":
+            now + timedelta(
+                hours=24
+            )
     }
+
 
     token = jwt.encode(
         payload,
         JWT_SECRET_KEY,
-        algorithm=JWT_ALGORITHM
+        algorithm="HS256"
     )
+
 
     return token
 
 
 # ---------------------------------------------------------
-# VERIFY JWT
+# TOKEN REQUIRED DECORATOR
 # ---------------------------------------------------------
 
 def token_required(route_function):
     """
-    Protect a Flask route using JWT authentication.
+    Protect Flask routes using JWT authentication.
+
+    In addition to validating the JWT, this decorator
+    verifies that the corresponding user still exists
+    in MongoDB.
     """
 
     @wraps(route_function)
-    def decorated(*args, **kwargs):
+    def wrapper(*args, **kwargs):
 
-        authorization = request.headers.get(
-            "Authorization",
-            ""
+        # ---------------------------------------------
+        # AUTHORIZATION HEADER
+        # ---------------------------------------------
+
+        authorization_header = (
+            request.headers.get(
+                "Authorization"
+            )
         )
 
-        if not authorization.startswith("Bearer "):
+
+        if not authorization_header:
 
             return jsonify({
-                "status": "error",
+                "status":
+                    "error",
+
                 "message":
                     "Authentication token is required."
             }), 401
 
-        token = authorization.split(
-            " ",
-            1
-        )[1].strip()
 
-        if not token:
+        # ---------------------------------------------
+        # EXPECT: Bearer <token>
+        # ---------------------------------------------
+
+        parts = authorization_header.split()
+
+
+        if (
+            len(parts) != 2
+            or parts[0].lower() != "bearer"
+        ):
 
             return jsonify({
-                "status": "error",
+                "status":
+                    "error",
+
                 "message":
-                    "Authentication token is required."
+                    "Invalid authorization header."
             }), 401
+
+
+        token = parts[1]
+
 
         try:
+
+            # -----------------------------------------
+            # DECODE JWT
+            # -----------------------------------------
 
             payload = jwt.decode(
                 token,
                 JWT_SECRET_KEY,
-                algorithms=[JWT_ALGORITHM]
+                algorithms=[
+                    "HS256"
+                ]
             )
 
-            # Store authenticated-user information
-            # for the current Flask request.
+
+            user_id = payload.get(
+                "user_id"
+            )
+
+
+            if not user_id:
+
+                return jsonify({
+                    "status":
+                        "error",
+
+                    "message":
+                        "Invalid authentication token."
+                }), 401
+
+
+            if not ObjectId.is_valid(
+                user_id
+            ):
+
+                return jsonify({
+                    "status":
+                        "error",
+
+                    "message":
+                        "Invalid authentication token."
+                }), 401
+
+
+            # -----------------------------------------
+            # VERIFY USER STILL EXISTS
+            # -----------------------------------------
+
+            database = get_database()
+
+            users_collection = database[
+                "users"
+            ]
+
+
+            user = users_collection.find_one({
+
+                "_id":
+                    ObjectId(
+                        user_id
+                    )
+
+            })
+
+
+            if not user:
+
+                return jsonify({
+                    "status":
+                        "error",
+
+                    "message":
+                        "User account no longer exists."
+                }), 401
+
+
+            # -----------------------------------------
+            # SAFE USER DATA
+            # -----------------------------------------
+
             g.current_user = {
-                "user_id": payload["user_id"],
-                "email": payload["email"]
+
+                "user_id":
+                    str(
+                        user["_id"]
+                    ),
+
+                "full_name":
+                    user.get(
+                        "full_name"
+                    ),
+
+                "email":
+                    user.get(
+                        "email"
+                    )
             }
+
+
+            # -----------------------------------------
+            # CONTINUE TO PROTECTED ROUTE
+            # -----------------------------------------
+
+            return route_function(
+                *args,
+                **kwargs
+            )
+
 
         except jwt.ExpiredSignatureError:
 
             return jsonify({
-                "status": "error",
+                "status":
+                    "error",
+
                 "message":
-                    "Authentication token has expired. Please log in again."
+                    "Authentication token has expired."
             }), 401
+
 
         except jwt.InvalidTokenError:
 
             return jsonify({
-                "status": "error",
+                "status":
+                    "error",
+
                 "message":
                     "Invalid authentication token."
             }), 401
 
-        return route_function(
-            *args,
-            **kwargs
-        )
 
-    return decorated
+        except Exception as error:
+
+            print(
+                f"Authentication error: {error}"
+            )
+
+            return jsonify({
+                "status":
+                    "error",
+
+                "message":
+                    "Authentication failed."
+            }), 401
+
+
+    return wrapper
