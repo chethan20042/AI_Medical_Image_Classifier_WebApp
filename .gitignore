@@ -1,22 +1,93 @@
-# Python
-Backend/venv/
-Backend/__pycache__/
-Backend/**/*.pyc
-
-# Environment variables
-Backend/.env
+# =========================================================
+# ENVIRONMENT VARIABLES / SECRETS
+# =========================================================
 .env
+.env.*
+!.env.example
 
-# Uploads
+Backend/.env
+backend/.env
+
+
+# =========================================================
+# PYTHON
+# =========================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+venv/
+.venv/
+Backend/venv/
+backend/venv/
+
+
+# =========================================================
+# FLASK / PYTHON TEMP FILES
+# =========================================================
+*.log
+.pytest_cache/
+.coverage
+
+
+# =========================================================
+# USER UPLOADS
+# =========================================================
 Backend/uploads/*
+backend/uploads/*
 
-# React / Node
+!Backend/uploads/.gitkeep
+!backend/uploads/.gitkeep
+
+
+# =========================================================
+# FRONTEND / NODE
+# =========================================================
+node_modules/
 frontend/node_modules/
+
 frontend/dist/
+dist/
 
-# VS Code
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# =========================================================
+# VITE ENVIRONMENT FILES
+# =========================================================
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+
+# =========================================================
+# VS CODE / IDE
+# =========================================================
 .vscode/
+.idea/
 
-# OS files
+
+# =========================================================
+# OPERATING SYSTEM
+# =========================================================
 .DS_Store
 Thumbs.db
+desktop.ini
+
+
+# =========================================================
+# TEST / TEMPORARY FILES
+# =========================================================
+model_load_test.txt
+test_groq.py
+test_prediction.py
+
+
+# =========================================================
+# DATASET
+# =========================================================
+processed_dataset/
+dataset/

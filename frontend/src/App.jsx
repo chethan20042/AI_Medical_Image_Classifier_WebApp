@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import About from "./pages/About";
+import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
@@ -50,6 +51,11 @@ function App() {
           <Dashboard />
         </ProtectedRoute>
       }
+    />
+
+    <Route
+      path="*"
+      element={<NotFound />}
     />
 
   </Routes>
